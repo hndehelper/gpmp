@@ -1,0 +1,17 @@
+{
+  "name": "gpmp-server",
+  "version": "1.0.0",
+  "description": "Real-time multiplayer server for Gahanu, Pirimi, Mal, Palathuru",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
+  }
+}

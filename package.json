@@ -1,0 +1,13 @@
+{
+  "name": "gpmp-online",
+  "version": "1.0.0",
+  "description": "Gahanu, Pirimi, Mal, Palathuru - Real-time Multiplayer Web Game",
+  "scripts": {
+    "start": "node server/src/server.js",
+    "install": "npm --prefix server install",
+    "build": "npm --prefix server install && npm --prefix client install && npm --prefix client run build",
+    "server": "node --watch server/src/server.js",
+    "client": "npm --prefix client run dev",
+    "test": "node server/test/scoring.test.js && node server/test/socket_flow.test.js"
+  }
+}
