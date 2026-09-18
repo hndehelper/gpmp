@@ -23,10 +23,10 @@ export default function App() {
   const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
   const [globalStats, setGlobalStats] = useState({
-    liveOnlineUsers: 1,
-    totalRoundsPlayed: 1420,
-    totalMatchesPlayed: 186,
-    activeRoomsCount: 1
+    liveOnlineUsers: 0,
+    totalRoundsPlayed: 0,
+    totalMatchesPlayed: 0,
+    activeRoomsCount: 0
   });
 
   // Room & Game State
@@ -40,8 +40,17 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
-  // Initialize Socket.io connection
+  // Initialize Socket.io connection and fetch initial stats
   useEffect(() => {
+    fetch(`${SERVER_URL}/api/stats`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.liveOnlineUsers !== 'undefined') {
+          setGlobalStats(data);
+        }
+      })
+      .catch(() => {});
+
     const s = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5

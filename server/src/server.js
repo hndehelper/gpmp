@@ -35,23 +35,26 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/stats', (req, res) => {
-  res.json(globalMetrics.getGlobalStats());
+  globalMetrics.setRoomCount(gameManager.getActiveRoomsCount());
+  res.json(globalMetrics.getGlobalStats(io));
 });
 
 // Real-time Socket.IO Handlers
 io.on('connection', (socket) => {
-  const stats = globalMetrics.userConnected();
+  globalMetrics.setRoomCount(gameManager.getActiveRoomsCount());
+  const stats = globalMetrics.getGlobalStats(io);
   io.emit('global_stats_update', stats);
 
   socket.on('get_global_stats', () => {
-    socket.emit('global_stats_update', globalMetrics.getGlobalStats());
+    globalMetrics.setRoomCount(gameManager.getActiveRoomsCount());
+    socket.emit('global_stats_update', globalMetrics.getGlobalStats(io));
   });
 
   socket.on('create_room', ({ hostName, avatar }) => {
     const room = gameManager.createRoom(socket.id, hostName, avatar);
     socket.join(room.code);
     socket.emit('room_created', { room: gameManager.getPublicRoom(room), playerId: socket.id });
-    io.emit('global_stats_update', globalMetrics.getGlobalStats());
+    io.emit('global_stats_update', globalMetrics.getGlobalStats(io));
   });
 
   socket.on('join_room', ({ roomCode, playerName, avatar }) => {
@@ -144,10 +147,17 @@ io.on('connection', (socket) => {
         room: leaveResult.room
       });
     }
-    const updatedStats = globalMetrics.userDisconnected();
+    globalMetrics.setRoomCount(gameManager.getActiveRoomsCount());
+    const updatedStats = globalMetrics.getGlobalStats(io);
     io.emit('global_stats_update', updatedStats);
   });
 });
+
+// Periodic broadcast to keep all clients perfectly synced
+setInterval(() => {
+  globalMetrics.setRoomCount(gameManager.getActiveRoomsCount());
+  io.emit('global_stats_update', globalMetrics.getGlobalStats(io));
+}, 15000);
 
 // SPA fallback
 app.get('*', (req, res) => {

@@ -1,8 +1,40 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Users, Flame, Trophy, Globe2 } from 'lucide-react';
+
+// Smoothly animates a number from old value to new value
+function useAnimatedCount(target, duration = 800) {
+  const [display, setDisplay] = useState(target);
+  const prev = useRef(target);
+
+  useEffect(() => {
+    if (prev.current === target) return;
+    const start = prev.current;
+    const diff = target - start;
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(start + diff * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+      else prev.current = target;
+    };
+
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+
+  return display;
+}
 
 export function GlobalStats({ stats }) {
   if (!stats) return null;
+
+  const animUsers   = useAnimatedCount(stats.liveOnlineUsers ?? 0);
+  const animRounds  = useAnimatedCount(stats.totalRoundsPlayed || 0);
+  const animMatches = useAnimatedCount(stats.totalMatchesPlayed || 0);
+  const animRooms   = useAnimatedCount(stats.activeRoomsCount || 0);
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 my-6">
@@ -31,7 +63,7 @@ export function GlobalStats({ stats }) {
             <div className="flex items-center justify-center gap-1.5 text-emerald-400 mb-1">
               <Users className="w-4 h-4" />
               <span className="text-xl font-black tracking-tight font-mono">
-                {stats.liveOnlineUsers || 1}
+                {animUsers}
               </span>
             </div>
             <div className="text-[11px] font-medium text-slate-400">
@@ -44,7 +76,7 @@ export function GlobalStats({ stats }) {
             <div className="flex items-center justify-center gap-1.5 text-amber-400 mb-1">
               <Flame className="w-4 h-4" />
               <span className="text-xl font-black tracking-tight font-mono">
-                {(stats.totalRoundsPlayed || 0).toLocaleString()}
+                {animRounds.toLocaleString()}
               </span>
             </div>
             <div className="text-[11px] font-medium text-slate-400">
@@ -57,7 +89,7 @@ export function GlobalStats({ stats }) {
             <div className="flex items-center justify-center gap-1.5 text-purple-400 mb-1">
               <Trophy className="w-4 h-4" />
               <span className="text-xl font-black tracking-tight font-mono">
-                {(stats.totalMatchesPlayed || 0).toLocaleString()}
+                {animMatches.toLocaleString()}
               </span>
             </div>
             <div className="text-[11px] font-medium text-slate-400">
@@ -70,7 +102,7 @@ export function GlobalStats({ stats }) {
             <div className="flex items-center justify-center gap-1.5 text-cyan-400 mb-1">
               <span className="text-base">🎮</span>
               <span className="text-xl font-black tracking-tight font-mono">
-                {Math.max(1, stats.activeRoomsCount || 0)}
+                {animRooms}
               </span>
             </div>
             <div className="text-[11px] font-medium text-slate-400">
@@ -82,3 +114,4 @@ export function GlobalStats({ stats }) {
     </div>
   );
 }
+

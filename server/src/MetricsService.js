@@ -9,8 +9,8 @@ const METRICS_FILE = path.join(__dirname, '../data/metrics.json');
 export class MetricsService {
   constructor() {
     this.liveOnlineUsers = 0;
-    this.totalRoundsPlayed = 1420; // Starting baseline for enthusiastic community
-    this.totalMatchesPlayed = 186;
+    this.totalRoundsPlayed = 0;
+    this.totalMatchesPlayed = 0;
     this.activeRoomsCount = 0;
     this.loadMetrics();
   }
@@ -19,8 +19,8 @@ export class MetricsService {
     try {
       if (fs.existsSync(METRICS_FILE)) {
         const data = JSON.parse(fs.readFileSync(METRICS_FILE, 'utf-8'));
-        this.totalRoundsPlayed = data.totalRoundsPlayed || this.totalRoundsPlayed;
-        this.totalMatchesPlayed = data.totalMatchesPlayed || this.totalMatchesPlayed;
+        this.totalRoundsPlayed = typeof data.totalRoundsPlayed === 'number' ? data.totalRoundsPlayed : 0;
+        this.totalMatchesPlayed = typeof data.totalMatchesPlayed === 'number' ? data.totalMatchesPlayed : 0;
       }
     } catch (e) {
       console.warn('Metrics file could not be read, using in-memory baseline', e.message);
@@ -66,13 +66,17 @@ export class MetricsService {
   }
 
   setRoomCount(count) {
-    this.activeRoomsCount = count;
+    this.activeRoomsCount = Math.max(0, count);
   }
 
-  getGlobalStats() {
+  getGlobalStats(io = null) {
+    let users = this.liveOnlineUsers;
+    if (io && io.sockets && io.sockets.sockets) {
+      users = io.sockets.sockets.size;
+      this.liveOnlineUsers = users;
+    }
     return {
-      // Community base + real live connected sockets
-      liveOnlineUsers: Math.max(1, this.liveOnlineUsers + 12),
+      liveOnlineUsers: users,
       totalRoundsPlayed: this.totalRoundsPlayed,
       totalMatchesPlayed: this.totalMatchesPlayed,
       activeRoomsCount: this.activeRoomsCount

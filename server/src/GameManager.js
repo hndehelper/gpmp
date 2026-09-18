@@ -12,6 +12,10 @@ export class GameManager {
     this.roomTimers = new Map(); // roomCode -> NodeJS.Timeout
   }
 
+  getActiveRoomsCount() {
+    return this.rooms.size;
+  }
+
   getPublicRoom(room) {
     if (!room) return null;
     return {
@@ -77,6 +81,9 @@ export class GameManager {
 
     this.rooms.set(code, room);
     globalMetrics.setRoomCount(this.rooms.size);
+    if (this.io) {
+      this.io.emit('global_stats_update', globalMetrics.getGlobalStats(this.io));
+    }
     return room;
   }
 
@@ -116,6 +123,9 @@ export class GameManager {
           this.roomTimers.delete(code);
           this.rooms.delete(code);
           globalMetrics.setRoomCount(this.rooms.size);
+          if (this.io) {
+            this.io.emit('global_stats_update', globalMetrics.getGlobalStats(this.io));
+          }
           return { code, roomDeleted: true };
         } else if (leavingPlayer.isHost) {
           const nonBot = room.players.find(p => !p.isBot);
@@ -358,6 +368,9 @@ export class GameManager {
 
     // Increment global metric for completed round
     globalMetrics.incrementRound();
+    if (this.io) {
+      this.io.emit('global_stats_update', globalMetrics.getGlobalStats(this.io));
+    }
 
     // Calculate score matrix
     const results = calculateRoundScores(
@@ -439,6 +452,9 @@ export class GameManager {
 
     room.status = 'GAME_OVER';
     globalMetrics.incrementMatch();
+    if (this.io) {
+      this.io.emit('global_stats_update', globalMetrics.getGlobalStats(this.io));
+    }
 
     const sortedPlayers = [...room.players].sort((a, b) => b.totalScore - a.totalScore);
     const winner = sortedPlayers[0];
